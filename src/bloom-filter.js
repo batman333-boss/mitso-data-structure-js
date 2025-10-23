@@ -1,80 +1,64 @@
-import { NotImplementedError } from "../extensions/index.js";
-
 export default class BloomFilter {
-  /**
-   * @param {number} size - the size of the storage.
-   */
-  constructor() {
-    // Bloom filter size directly affects the likelihood of false positives.
-    // The bigger the size the lower the likelihood of false positives.
+  constructor(size = 100) {
+    this.size = size;
+    this.store = this.createStore(size);
   }
 
-  /**
-   * @param {string} item
-   */
-  insert(/* item */) {
-    throw new NotImplementedError("Not implemented");
-    // remove line with error and write your code here
+  
+  createStore(size) {
+    const data = new Array(size).fill(0);
+
+    return {
+      getValue(index) {
+        return data[index];
+      },
+      setValue(index, value) {
+        data[index] = value;
+      },
+    };
   }
 
-  /**
-   * @param {string} item
-   * @return {boolean}
-   */
-  mayContain(/* item */) {
-    throw new NotImplementedError("Not implemented");
-    // remove line with error and write your code here
+  // Первая хеш-функция
+  hash1(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash + str.charCodeAt(i) * i) % this.size;
+    }
+    return hash;
   }
 
-  /**
-   * Creates the data store for our filter.
-   * We use this method to generate the store in order to
-   * encapsulate the data itself and only provide access
-   * to the necessary methods.
-   *
-   * @param {number} size
-   * @return {Object}
-   */
-  createStore(/* size */) {
-    throw new NotImplementedError("Not implemented");
-    // remove line with error and write your code here
+  // Вторая хеш-функция
+  hash2(str) {
+    let hash = 1;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 17 + str.charCodeAt(i)) % this.size;
+    }
+    return hash;
   }
 
-  /**
-   * @param {string} item
-   * @return {number}
-   */
-  hash1(/* item */) {
-    throw new NotImplementedError("Not implemented");
-    // remove line with error and write your code here
+  // Третья хеш-функция
+  hash3(str) {
+    let hash = 7;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 13 + str.charCodeAt(i)) % this.size;
+    }
+    return hash;
   }
 
-  /**
-   * @param {string} item
-   * @return {number}
-   */
-  hash2(/* item */) {
-    throw new NotImplementedError("Not implemented");
-    // remove line with error and write your code here
+  // Получает массив из 3 хеш-значений
+  getHashValues(str) {
+    return [this.hash1(str), this.hash2(str), this.hash3(str)];
   }
 
-  /**
-   * @param {string} item
-   * @return {number}
-   */
-  hash3(/* item */) {
-    throw new NotImplementedError("Not implemented");
-    // remove line with error and write your code here
+  // Добавляет элемент в фильтр
+  insert(str) {
+    const values = this.getHashValues(str);
+    values.forEach((v) => this.store.setValue(v, 1));
   }
 
-  /**
-   * Runs all 3 hash functions on the input and returns an array of results.
-   *
-   * @param {string} item
-   * @return {number[]}
-   */
-  getHashValues(/* item */) {
-    throw new NotImplementedError("Not implemented");
-    // remove line with error and write your code here
+  // Проверяет, возможно ли наличие элемента
+  mayContain(str) {
+    const values = this.getHashValues(str);
+    return values.every((v) => this.store.getValue(v) === 1);
   }
 }
