@@ -1,48 +1,56 @@
+import { NotImplementedError } from '../extensions/index.js';
+
 import { ListNode } from '../extensions/list-node.js';
+
+/**
+ * Implement the Queue with a given interface via linked list (use ListNode extension above).
+ *
+ * @example
+ * const queue = new Queue();
+ *
+ * queue.enqueue(1); // adds the element to the queue
+ * queue.enqueue(3); // adds the element to the queue
+ * queue.dequeue(); // returns the top element from queue and deletes it, returns 1
+ * queue.getUnderlyingList() // returns { value: 3, next: null }
+ */
 export default class Queue {
   constructor() {
-    this.head = null; // первый элемент (начало очереди)
-    this.tail = null; // последний элемент (конец очереди)
+    this.front = null;
+    this.rear = null;
   }
 
-  /**
-   * Возвращает базовый связанный список
-   * @return {Object | null}
-   */
   getUnderlyingList() {
-    return this.head;
+    return this.front;
   }
 
-  /**
-   * Добавляет элемент в конец очереди
-   * @param {*} value
-   */
   enqueue(value) {
-    const node = new ListNode(value);
-
-    if (!this.head) {
-      this.head = node;
-      this.tail = node;
+    const newNode = new ListNode(value);
+    
+    if (this.rear === null) {
+      // Queue is empty, both front and rear point to new node
+      this.front = newNode;
+      this.rear = newNode;
     } else {
-      this.tail.next = node;
-      this.tail = node;
+      // Add the new node at the end and update rear
+      this.rear.next = newNode;
+      this.rear = newNode;
     }
   }
 
-  /**
-   * Удаляет и возвращает элемент из начала очереди
-   * @return {*}
-   */
   dequeue() {
-    if (!this.head) return null;
-
-    const value = this.head.value;
-    this.head = this.head.next;
-
-    if (!this.head) {
-      this.tail = null; // если очередь опустела
+    if (this.front === null) {
+      return null; // or throw an error, depending on requirements
     }
-
-    return value;
+    
+    // Remove front node and return its value
+    const dequeuedValue = this.front.value;
+    this.front = this.front.next;
+    
+    // If front becomes null, then rear should also become null
+    if (this.front === null) {
+      this.rear = null;
+    }
+    
+    return dequeuedValue;
   }
 }

@@ -1,5 +1,11 @@
-import { Node } from "../extensions/list-tree.js";
+import { NotImplementedError } from "../extensions/index.js";
 
+import { Node } from '../extensions/list-tree.js';
+
+/**
+ * Implement simple binary search tree according to task description
+ * using Node from extensions
+ */
 export default class BinarySearchTree {
   constructor() {
     this._root = null;
@@ -10,121 +16,121 @@ export default class BinarySearchTree {
   }
 
   add(data) {
-    this._root = addWithin(this._root, data);
+    const newNode = new Node(data);
+    
+    if (this._root === null) {
+      this._root = newNode;
+      return;
+    }
+    
+    this._addNode(this._root, newNode);
+  }
 
-    function addWithin(node, data) {
-      if (!node) {
-        return new Node(data);
-      }
-
-      if (data === node.data) {
-        return node;
-      }
-
-      if (data < node.data) {
-        node.left = addWithin(node.left, data);
+  _addNode(node, newNode) {
+    if (newNode.data < node.data) {
+      if (node.left === null) {
+        node.left = newNode;
       } else {
-        node.right = addWithin(node.right, data);
+        this._addNode(node.left, newNode);
       }
-
-      return node;
+    } else {
+      if (node.right === null) {
+        node.right = newNode;
+      } else {
+        this._addNode(node.right, newNode);
+      }
     }
   }
 
   has(data) {
-    return searchWithin(this._root, data);
-
-    function searchWithin(node, data) {
-      if (!node) {
-        return false;
-      }
-
-      if (node.data === data) {
-        return true;
-      }
-
-      return data < node.data
-        ? searchWithin(node.left, data)
-        : searchWithin(node.right, data);
-    }
+    return this.find(data) !== null;
   }
 
   find(data) {
-    return findNode(this._root, data);
+    return this._findNode(this._root, data);
+  }
 
-    function findNode(node, data) {
-      if (!node) return null;
-
-      if (node.data === data) return node;
-
-      return data < node.data
-        ? findNode(node.left, data)
-        : findNode(node.right, data);
+  _findNode(node, data) {
+    if (node === null) {
+      return null;
+    }
+    
+    if (data < node.data) {
+      return this._findNode(node.left, data);
+    } else if (data > node.data) {
+      return this._findNode(node.right, data);
+    } else {
+      return node;
     }
   }
 
   remove(data) {
-    this._root = removeNode(this._root, data);
+    this._root = this._removeNode(this._root, data);
+  }
 
-    function removeNode(node, data) {
-      if (!node) {
+  _removeNode(node, data) {
+    if (node === null) {
+      return null;
+    }
+    
+    if (data < node.data) {
+      node.left = this._removeNode(node.left, data);
+      return node;
+    } else if (data > node.data) {
+      node.right = this._removeNode(node.right, data);
+      return node;
+    } else {
+      // Node to be deleted found
+      
+      // Case 1: Node with no children
+      if (node.left === null && node.right === null) {
         return null;
       }
-
-      if (data < node.data) {
-        node.left = removeNode(node.left, data);
-        return node;
-      } else if (data > node.data) {
-        node.right = removeNode(node.right, data);
-        return node;
-      } else {
-        
-        if (!node.left && !node.right) {
-          return null;
-        }
-
-        if (!node.left) {
-          return node.right;
-        }
-
-        if (!node.right) {
-          return node.left;
-        }
-
-        
-        let minFromRight = node.right;
-        while (minFromRight.left) {
-          minFromRight = minFromRight.left;
-        }
-
-        node.data = minFromRight.data;
-        node.right = removeNode(node.right, minFromRight.data);
-
-        return node;
+      
+      // Case 2: Node with only one child
+      if (node.left === null) {
+        return node.right;
+      } else if (node.right === null) {
+        return node.left;
       }
+      
+      // Case 3: Node with two children
+      // Find the smallest node in the right subtree (inorder successor)
+      const minRight = this._findMinNode(node.right);
+      node.data = minRight.data;
+      node.right = this._removeNode(node.right, minRight.data);
+      return node;
     }
+  }
+
+  _findMinNode(node) {
+    if (node.left === null) {
+      return node;
+    }
+    return this._findMinNode(node.left);
   }
 
   min() {
-    if (!this._root) return null;
-
-    let node = this._root;
-    while (node.left) {
-      node = node.left;
+    if (this._root === null) {
+      return null;
     }
-
-    return node.data;
+    
+    let current = this._root;
+    while (current.left !== null) {
+      current = current.left;
+    }
+    return current.data;
   }
 
   max() {
-    if (!this._root) return null;
-
-    let node = this._root;
-    while (node.right) {
-      node = node.right;
+    if (this._root === null) {
+      return null;
     }
-
-    return node.data;
+    
+    let current = this._root;
+    while (current.right !== null) {
+      current = current.right;
+    }
+    return current.data;
   }
 }
-

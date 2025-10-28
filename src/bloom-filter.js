@@ -1,64 +1,115 @@
+import { NotImplementedError } from "../extensions/index.js";
+
 export default class BloomFilter {
+  /**
+   * @param {number} size - the size of the storage.
+   */
   constructor(size = 100) {
     this.size = size;
-    this.store = this.createStore(size);
+    this.store = this.createStore(this.size);
   }
 
-  
+  /**
+   * @param {string} item
+   */
+  insert(item) {
+    const hashValues = this.getHashValues(item);
+    
+    hashValues.forEach(hash => {
+      this.store.setValue(hash);
+    });
+  }
+
+  /**
+   * @param {string} item
+   * @return {boolean}
+   */
+  mayContain(item) {
+    const hashValues = this.getHashValues(item);
+    
+    for (let i = 0; i < hashValues.length; i++) {
+      if (!this.store.getValue(hashValues[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Creates the data store for our filter.
+   * We use this method to generate the store in order to
+   * encapsulate the data itself and only provide access
+   * to the necessary methods.
+   *
+   * @param {number} size
+   * @return {Object}
+   */
   createStore(size) {
-    const data = new Array(size).fill(0);
+    const storage = new Array(size).fill(false);
 
-    return {
+    const store = {
       getValue(index) {
-        return data[index];
+        return storage[index];
       },
-      setValue(index, value) {
-        data[index] = value;
-      },
+      setValue(index) {
+        storage[index] = true;
+      }
     };
+
+    return store;
   }
 
-  // Первая хеш-функция
-  hash1(str) {
+  /**
+   * @param {string} item
+   * @return {number}
+   */
+  hash1(item) {
     let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = (hash + str.charCodeAt(i) * i) % this.size;
+    for (let i = 0; i < item.length; i++) {
+      hash = (hash << 5) + hash + item.charCodeAt(i);
+      hash = hash & hash; // Convert to 32-bit integer
+      hash = Math.abs(hash);
     }
-    return hash;
+    return hash % this.size;
   }
 
-  // Вторая хеш-функция
-  hash2(str) {
-    let hash = 1;
-    for (let i = 0; i < str.length; i++) {
-      hash = (hash * 17 + str.charCodeAt(i)) % this.size;
+  /**
+   * @param {string} item
+   * @return {number}
+   */
+  hash2(item) {
+    let hash = 5381;
+    for (let i = 0; i < item.length; i++) {
+      hash = (hash << 5) + hash + item.charCodeAt(i);
     }
-    return hash;
+    return Math.abs(hash) % this.size;
   }
 
-  // Третья хеш-функция
-  hash3(str) {
-    let hash = 7;
-    for (let i = 0; i < str.length; i++) {
-      hash = (hash * 13 + str.charCodeAt(i)) % this.size;
+  /**
+   * @param {string} item
+   * @return {number}
+   */
+  hash3(item) {
+    let hash = 0;
+    for (let i = 0; i < item.length; i++) {
+      hash = (hash << 5) - hash;
+      hash += item.charCodeAt(i);
+      hash = hash & hash; // Convert to 32-bit integer
     }
-    return hash;
+    return Math.abs(hash) % this.size;
   }
 
-  // Получает массив из 3 хеш-значений
-  getHashValues(str) {
-    return [this.hash1(str), this.hash2(str), this.hash3(str)];
-  }
-
-  // Добавляет элемент в фильтр
-  insert(str) {
-    const values = this.getHashValues(str);
-    values.forEach((v) => this.store.setValue(v, 1));
-  }
-
-  // Проверяет, возможно ли наличие элемента
-  mayContain(str) {
-    const values = this.getHashValues(str);
-    return values.every((v) => this.store.getValue(v) === 1);
+  /**
+   * Runs all 3 hash functions on the input and returns an array of results.
+   *
+   * @param {string} item
+   * @return {number[]}
+   */
+  getHashValues(item) {
+    return [
+      this.hash1(item),
+      this.hash2(item),
+      this.hash3(item)
+    ];
   }
 }
